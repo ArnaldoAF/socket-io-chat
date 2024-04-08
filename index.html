@@ -50,6 +50,8 @@
             list-style-type: none;
             margin: 0;
             padding: 0;
+            width: 70%;
+            border: 1px solid black;
         }
 
         #messages>li {
@@ -59,30 +61,67 @@
         #messages>li:nth-child(odd) {
             background: #efefef;
         }
+
+        #main {
+            display: flex;
+            flex: 1;
+            height: 80vh;
+            ;
+        }
+        .its-me {
+            color: blue;
+            font-weight: bolder;
+        }
     </style>
 </head>
 
 <body>
-    <ul id="messages"></ul>
+    <div id="main">
+        <ul id="messages"></ul>
+        <div id="whos-online">
+            <h1>ONLINE</h1>
+            <ul id="online-list"></ul>
+        </div>
+    </div>
     <form id="form" action="">
+        <h3  id="nickname"></h3>
         <input id="input" autocomplete="off" /><button>Send</button>
+        <button id="toggle-btn">Disconnect</button>
     </form>
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
-        const useriD = Math.floor(Math.random() * 100)
+        const useriD = Math.floor(Math.random() * 1000)
 
         const greetingOBJ = {
             user: useriD,
-            value: "ENTROU!"
+            value: "ENTROU! ✨"
         }
 
         socket.emit('chat message from front', greetingOBJ);
+        socket.emit('user connected', useriD);
+
 
 
         const form = document.getElementById('form');
         const input = document.getElementById('input');
         const messages = document.getElementById('messages');
+        const onlineListElement = document.getElementById('online-list');
+        const nickname = document.getElementById('nickname');
+        nickname.innerText=useriD;
+
+        function changeOnlineList(onlinelist) {
+            onlineListElement.innerHTML = '';
+
+            onlinelist.forEach(userId => {
+                const item = document.createElement('li');
+                item.textContent = `🟡 👤${userId}`;
+                if(userId == useriD) item.classList.add("its-me");
+                onlineListElement.appendChild(item);
+            })
+            
+        }
+
 
         form.addEventListener('submit', (e) => {
             e.preventDefault();
@@ -97,11 +136,31 @@
         });
 
         socket.on('chat message from back', (msg) => {
+            const {user, value} = msg
+            const finalMessage = `👤 ${user}: ${value}`
+
+
             const item = document.createElement('li');
-            item.textContent = msg;
+            item.textContent = finalMessage;
+            if(user == useriD) item.classList.add("its-me");
             messages.appendChild(item);
             window.scrollTo(0, document.body.scrollHeight);
         });
+
+        const toggleButton = document.getElementById('toggle-btn');
+
+        toggleButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (socket.connected) {
+                toggleButton.innerText = 'Connect';
+                socket.disconnect();
+            } else {
+                toggleButton.innerText = 'Disconnect';
+                socket.connect();
+            }
+        });
+
+        socket.on('atualizar lista online', lista => changeOnlineList(lista))
     </script>
 </body>
 
