@@ -15,6 +15,7 @@ app.get('/', (req, res) => {
 });
 
 var onlineList = []
+var typingList = []
 
 io.on('connection', (socket) => {
     let USER_ID = null
